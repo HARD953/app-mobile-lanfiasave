@@ -5,8 +5,9 @@ const SERVER_KEY = 'lfs.parcours.server';
 const ACCESS = 'lfs.parcours.access';
 const REFRESH = 'lfs.parcours.refresh';
 
-/** URL de l'API : réglage local (écran Serveur) > EXPO_PUBLIC_API_URL > valeur par défaut. */
-export const DEFAULT_SERVER = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
+/** API de production (domaine stable Vercel). En local : EXPO_PUBLIC_API_URL=http://<IP du poste>:8000/api/v1. */
+export const PRODUCTION_API_URL = 'https://backend-lanfiasave-uwy5.vercel.app/api/v1';
+export const DEFAULT_SERVER = process.env.EXPO_PUBLIC_API_URL || PRODUCTION_API_URL;
 
 export async function getServer(): Promise<string> {
   return ((await AsyncStorage.getItem(SERVER_KEY)) || DEFAULT_SERVER).replace(/\/$/, '');
