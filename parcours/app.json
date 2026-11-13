@@ -41,6 +41,17 @@
     ],
     "owner": "samajeste01",
     "scheme": "lanfiasave-parcours",
-    "primaryColor": "#0B4F9C"
+    "primaryColor": "#0B4F9C",
+    "extra": {
+      "eas": {
+        "projectId": "de205223-c9a2-4df0-80ea-add45e99cbd1"
+      }
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/de205223-c9a2-4df0-80ea-add45e99cbd1"
+    }
   }
 }

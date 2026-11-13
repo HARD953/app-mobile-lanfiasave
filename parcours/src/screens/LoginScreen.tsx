@@ -5,10 +5,10 @@
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { StatusBar } from 'expo-status-bar';
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ApiError, NetworkError } from '../api';
+import { ApiError, NetworkError, getServer, setServer } from '../api';
 import { useSession } from '../session';
 import { C, R } from '../theme';
 import { Banner, Button, Field } from '../ui';
@@ -29,11 +29,18 @@ export default function LoginScreen() {
   };
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [showServer, setShowServer] = useState(false);
+  const [server, setServerValue] = useState('');
+
+  useEffect(() => {
+    getServer().then(setServerValue);
+  }, []);
 
   async function submit(fullPin: string) {
     setLoading(true);
     setError(null);
     try {
+      if (showServer) await setServer(server);
       await login(code.trim().toUpperCase(), fullPin);
     } catch (e) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
@@ -62,9 +69,11 @@ export default function LoginScreen() {
       <StatusBar style="light" />
       <ScrollView contentContainerStyle={{ flexGrow: 1 }} keyboardShouldPersistTaps="handled">
         <View style={[st.hero, { paddingTop: insets.top + 32 }]}>
-          <View style={st.logo}>
-            <Ionicons name="shield-checkmark" size={36} color={C.white} />
-          </View>
+          <Pressable onLongPress={() => setShowServer((v) => !v)} delayLongPress={800} accessibilityHint="Appui long : réglage du serveur">
+            <View style={st.logo}>
+              <Ionicons name="shield-checkmark" size={36} color={C.white} />
+            </View>
+          </Pressable>
           <Text style={st.brand}>Mon Parcours</Text>
           <Text style={st.tagline}>Suivez votre dossier LanfiaSave</Text>
         </View>
@@ -80,6 +89,9 @@ export default function LoginScreen() {
               <Text style={st.title}>Votre code dossier</Text>
               <Text style={st.help}>Il est écrit sur la fiche remise par l’agent. Exemple : LFS-ACDE-FGHJ</Text>
               <Field icon="card-outline" placeholder="LFS-XXXX-XXXX" value={code} onChangeText={(t) => setCode(t.toUpperCase())} autoCapitalize="characters" autoCorrect={false} spellCheck={false} returnKeyType="next" onSubmitEditing={() => code.length >= 6 && setStep('pin')} style={{ marginTop: 12 }} />
+              {showServer && (
+                <Field label="Adresse du serveur" icon="server-outline" value={server} onChangeText={setServerValue} autoCapitalize="none" autoCorrect={false} keyboardType="url" />
+              )}
               <Button title="Continuer" icon="arrow-forward" onPress={() => setStep('pin')} disabled={code.trim().length < 6} />
             </>
           ) : (

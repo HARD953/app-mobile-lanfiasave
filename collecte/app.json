@@ -26,7 +26,13 @@
       "package": "com.lanfiatech.lanfiasave.collecte",
       "permissions": [
         "ACCESS_COARSE_LOCATION",
-        "ACCESS_FINE_LOCATION"
+        "ACCESS_FINE_LOCATION",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION"
       ]
     },
     "web": {
@@ -52,6 +58,17 @@
     ],
     "owner": "samajeste01",
     "scheme": "lanfiasave-collecte",
-    "primaryColor": "#0B4F9C"
+    "primaryColor": "#0B4F9C",
+    "extra": {
+      "eas": {
+        "projectId": "f32e3b7c-d199-428d-a331-e9f4bdd6565a"
+      }
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/f32e3b7c-d199-428d-a331-e9f4bdd6565a"
+    }
   }
 }
