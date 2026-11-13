@@ -1,0 +1,46 @@
+{
+  "expo": {
+    "name": "LanfiaSave Mon Parcours",
+    "slug": "lanfiasave-mon-parcours",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.lanfiatech.lanfiasave.parcours",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false,
+        "CFBundleDevelopmentRegion": "fr"
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#0E9595",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false,
+      "package": "com.lanfiatech.lanfiasave.parcours"
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-secure-store",
+      "expo-font",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#0E9595",
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 180
+        }
+      ]
+    ],
+    "owner": "samajeste01",
+    "scheme": "lanfiasave-parcours",
+    "primaryColor": "#0B4F9C"
+  }
+}

@@ -1,0 +1,57 @@
+{
+  "expo": {
+    "name": "LanfiaSave Collecte",
+    "slug": "lanfiasave-collecte",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.lanfiatech.lanfiasave.collecte",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "LanfiaSave Collecte enregistre la position du ménage uniquement avec l’accord de la personne recensée.",
+        "ITSAppUsesNonExemptEncryption": false,
+        "CFBundleDevelopmentRegion": "fr"
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#0B4F9C",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false,
+      "package": "com.lanfiatech.lanfiasave.collecte",
+      "permissions": [
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION"
+      ]
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-secure-store",
+      "expo-font",
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "LanfiaSave Collecte enregistre la position du ménage uniquement avec l’accord de la personne recensée."
+        }
+      ],
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#0B4F9C",
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 180
+        }
+      ]
+    ],
+    "owner": "samajeste01",
+    "scheme": "lanfiasave-collecte",
+    "primaryColor": "#0B4F9C"
+  }
+}
