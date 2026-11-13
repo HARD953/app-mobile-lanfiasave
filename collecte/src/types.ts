@@ -24,6 +24,8 @@ export type Questionnaire = {
   code: string;
   version: number;
   title: string;
+  questions_count?: number;
+  variant?: { variant: string; label: string; description: string; minutes: number | null; order: number; recommended_for: string[] };
   definition: {
     sections: { code: string; title: string; icon?: string; questions: Question[] }[];
     special_values: Record<string, string>;
@@ -38,7 +40,10 @@ export type FieldPack = {
   me: Me;
   organizationId: string;
   organizationName: string;
+  /** Questionnaire complet (rétrocompatibilité avec les packs déjà téléchargés). */
   questionnaire: Questionnaire;
+  /** Formulaires disponibles, du plus court au plus complet. */
+  questionnaires?: Questionnaire[];
   territories: Territory[];
   operations: FieldOperation[];
   downloadedAt: string;

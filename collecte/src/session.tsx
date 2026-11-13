@@ -34,13 +34,18 @@ async function downloadPack(): Promise<FieldPack> {
       ? api<{ results: FieldOperation[] }>(`operations/?organization=${collect.organization}`).then((r) => r.results)
       : Promise.resolve([] as FieldOperation[]),
   ]);
-  const questionnaire = questionnaires.sort((a, b) => b.version - a.version)[0];
+  // Un formulaire par code (dernière version), triés du plus court au plus complet.
+  const latest = new Map<string, Questionnaire>();
+  for (const q of questionnaires) if (!latest.has(q.code) || latest.get(q.code)!.version < q.version) latest.set(q.code, q);
+  const forms = [...latest.values()].sort((a, b) => (a.variant?.order ?? 99) - (b.variant?.order ?? 99));
+  const questionnaire = forms.find((q) => q.variant?.variant === 'complete') ?? forms[forms.length - 1];
   if (!questionnaire) throw new ApiError(404, 'Aucun questionnaire publié.');
   return {
     me,
     organizationId: collect.organization,
     organizationName: collect.organization_name,
     questionnaire,
+    questionnaires: forms,
     territories: territories.filter((t) => ['commune', 'neighborhood', 'village', 'site'].includes(t.level)),
     operations: operations.filter((o) => o.status !== 'closed'),
     downloadedAt: new Date().toISOString(),
@@ -74,6 +79,15 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       setPack(p);
       setSignedIn(session && !!p);
       setReady(true);
+      // Pack téléchargé avant l'arrivée des formulaires courts : mise à jour silencieuse si le réseau le permet.
+      if (session && p && !p.questionnaires) {
+        downloadPack()
+          .then(async (fresh) => {
+            await savePack(fresh);
+            setPack(fresh);
+          })
+          .catch(() => undefined);
+      }
     })();
   }, []);
 

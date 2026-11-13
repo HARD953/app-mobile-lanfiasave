@@ -47,6 +47,7 @@ type Draft = {
   address: string;
   emergency: boolean;
   operation: string | null;
+  questionnaireId: string | null;
   gps: { latitude: number; longitude: number } | null;
   members: DraftMember[];
   answers: Record<string, unknown>;
@@ -59,6 +60,7 @@ const emptyDraft = (): Draft => ({
   address: '',
   emergency: false,
   operation: null,
+  questionnaireId: null,
   gps: null,
   members: [],
   answers: {},
@@ -71,7 +73,14 @@ export default function NewHouseholdScreen({ navigation }: NativeStackScreenProp
   const [saving, setSaving] = useState(false);
   const scrollRef = useRef<ScrollViewInstance>(null);
 
-  const sections = pack?.questionnaire.definition.sections ?? [];
+  const forms = pack ? pack.questionnaires ?? [pack.questionnaire] : [];
+  const selectedOperation = pack?.operations?.find((o) => o.id === draft?.operation);
+  const recommended =
+    forms.find((f) => selectedOperation && f.variant?.recommended_for.includes(selectedOperation.kind)) ??
+    forms.find((f) => f.variant?.variant === 'standard') ??
+    forms[forms.length - 1];
+  const form = forms.find((f) => f.id === draft?.questionnaireId) ?? recommended;
+  const sections = form?.definition.sections ?? [];
   // Étapes : 0 lieu · 1 membres · 2..n rubriques du questionnaire · n+1 récapitulatif
   const totalSteps = sections.length + 3;
 
@@ -152,7 +161,7 @@ export default function NewHouseholdScreen({ navigation }: NativeStackScreenProp
       payload: {
         client_uuid: draft.client_uuid,
         organization: pack.organizationId,
-        questionnaire: pack.questionnaire.id,
+        questionnaire: form!.id,
         territory: draft.territory,
         address_description: draft.address,
         gps_consent: !!draft.gps,
@@ -206,18 +215,42 @@ export default function NewHouseholdScreen({ navigation }: NativeStackScreenProp
               {operations.length > 0 && (
                 <Card>
                   <SectionTitle icon="alert-circle-outline" title="Ménage touché par une opération ?" hint="Déguerpissement, sinistre, site minier… Un dossier de suivi sera ouvert pour chaque membre." />
-                  <Pressable onPress={() => update({ operation: null })} style={[st.opRow, !draft.operation && st.opRowOn]} accessibilityRole="radio" accessibilityState={{ selected: !draft.operation }}>
+                  <Pressable onPress={() => update({ operation: null, questionnaireId: null })} style={[st.opRow, !draft.operation && st.opRowOn]} accessibilityRole="radio" accessibilityState={{ selected: !draft.operation }}>
                     <Ionicons name={!draft.operation ? 'radio-button-on' : 'radio-button-off'} size={22} color={!draft.operation ? C.primary : C.textSoft} />
                     <Text style={st.opTitle}>Non, aucune</Text>
                   </Pressable>
                   {operations.map((o) => {
                     const on = draft.operation === o.id;
                     return (
-                      <Pressable key={o.id} onPress={() => update({ operation: o.id, emergency: true })} style={[st.opRow, on && st.opRowOn]} accessibilityRole="radio" accessibilityState={{ selected: on }}>
+                      <Pressable key={o.id} onPress={() => update({ operation: o.id, emergency: true, questionnaireId: null })} style={[st.opRow, on && st.opRowOn]} accessibilityRole="radio" accessibilityState={{ selected: on }}>
                         <Ionicons name={on ? 'radio-button-on' : 'radio-button-off'} size={22} color={on ? C.primary : C.textSoft} />
                         <View style={{ flex: 1 }}>
                           <Text style={st.opTitle}>{o.title}</Text>
                           <Text style={st.memberSub}>{o.kind_label}</Text>
+                        </View>
+                      </Pressable>
+                    );
+                  })}
+                </Card>
+              )}
+              {forms.length > 1 && (
+                <Card>
+                  <SectionTitle icon="document-text-outline" title="Quel formulaire ?" hint="Choisissez selon la situation. Le formulaire complet peut être fait plus tard." />
+                  {forms.map((f) => {
+                    const on = form?.id === f.id;
+                    const isReco = recommended?.id === f.id;
+                    return (
+                      <Pressable key={f.id} onPress={() => update({ questionnaireId: f.id })} style={[st.opRow, on && st.opRowOn]} accessibilityRole="radio" accessibilityState={{ selected: on }}>
+                        <Ionicons name={on ? 'radio-button-on' : 'radio-button-off'} size={22} color={on ? C.primary : C.textSoft} />
+                        <View style={{ flex: 1 }}>
+                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                            <Text style={st.opTitle}>{f.variant?.label ?? f.title}</Text>
+                            <Text style={st.formMeta}>
+                              {f.questions_count ?? '—'} questions{f.variant?.minutes ? ` · ~${f.variant.minutes} min` : ''}
+                            </Text>
+                            {isReco && <Text style={st.reco}>Conseillé</Text>}
+                          </View>
+                          {!!f.variant?.description && <Text style={st.memberSub}>{f.variant.description}</Text>}
                         </View>
                       </Pressable>
                     );
@@ -264,7 +297,7 @@ export default function NewHouseholdScreen({ navigation }: NativeStackScreenProp
               {sections[draft.step - 2].questions
                 .filter((q) => isVisible(q, draft.answers))
                 .map((q) => (
-                  <QuestionInput key={q.code} q={q} value={draft.answers[q.code]} special={pack.questionnaire.definition.special_values} onChange={(v) => update({ answers: setAnswer(draft.answers, q.code, v) })} />
+                  <QuestionInput key={q.code} q={q} value={draft.answers[q.code]} special={form!.definition.special_values} onChange={(v) => update({ answers: setAnswer(draft.answers, q.code, v) })} />
                 ))}
             </Card>
           )}
@@ -536,6 +569,8 @@ const st = StyleSheet.create({
   specialTxt: { fontSize: 12.5, color: C.textMuted, fontWeight: '600' },
   opRow: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: R.md, borderWidth: 1.5, borderColor: C.border, marginBottom: 8, backgroundColor: C.white },
   opRowOn: { borderColor: C.primary, backgroundColor: C.primaryPale2 },
+  formMeta: { fontSize: 12.5, color: C.textMuted, fontWeight: '600' },
+  reco: { fontSize: 11.5, fontWeight: '800', color: C.white, backgroundColor: C.success, paddingHorizontal: 8, paddingVertical: 2, borderRadius: 10, overflow: 'hidden' },
   opTitle: { fontSize: 15.5, fontWeight: '600', color: C.text },
   multi: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   multiChip: { flexDirection: 'row', alignItems: 'center', gap: 6, minHeight: 44, paddingHorizontal: 14, borderRadius: 22, borderWidth: 1.5, borderColor: C.border, backgroundColor: C.white },
