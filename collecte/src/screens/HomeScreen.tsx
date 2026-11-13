@@ -76,6 +76,11 @@ export default function HomeScreen({ navigation }: NativeStackScreenProps<RootSt
               <Text style={st.itemSub}>
                 {item.summary.territoryName} · {item.summary.membersCount} personne(s)
               </Text>
+              {!!item.summary.operationTitle && (
+                <Text style={[st.itemSub, { color: C.warning, fontWeight: '600' }]} numberOfLines={1}>
+                  {item.summary.operationTitle}
+                </Text>
+              )}
               <Pill text={item.result ? `${STATUS[item.status].label} · ${item.result.household.public_code}` : STATUS[item.status].label} tone={STATUS[item.status].tone} />
             </View>
             <Ionicons name="chevron-forward" size={20} color={C.textSoft} />

@@ -4,7 +4,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { RefreshControl, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { api, NetworkError } from '../api';
 import type { RootStack } from '../navigation';
-import { useSession, type MyApplication } from '../session';
+import { useSession, type MyAid, type MyApplication, type MyCase } from '../session';
 import { C, R } from '../theme';
 import { Banner, Card, Header, HeaderButton, Pill } from '../ui';
 
@@ -13,14 +13,23 @@ export const OUTCOME_TONE = { approved: 'success', rejected: 'error', deferred: 
 export default function HomeScreen({ navigation }: NativeStackScreenProps<RootStack, 'Home'>) {
   const { profile, reloadProfile } = useSession();
   const [apps, setApps] = useState<MyApplication[] | null>(null);
+  const [aids, setAids] = useState<MyAid[]>([]);
+  const [cases, setCases] = useState<MyCase[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
 
   const load = useCallback(async () => {
     setError(null);
     try {
-      const [list] = await Promise.all([api<MyApplication[]>('me/applications/'), reloadProfile()]);
+      const [list, myAids, myCases] = await Promise.all([
+        api<MyApplication[]>('me/applications/'),
+        api<MyAid[]>('me/assistances/'),
+        api<MyCase[]>('me/cases/'),
+        reloadProfile(),
+      ]);
       setApps(list);
+      setAids(myAids);
+      setCases(myCases);
     } catch (e) {
       setError(e instanceof NetworkError ? 'Pas de connexion. Les informations ne sont peut-être pas à jour.' : 'Impossible de charger vos demandes.');
     }
@@ -51,6 +60,54 @@ export default function HomeScreen({ navigation }: NativeStackScreenProps<RootSt
           </View>
           <Pill text={profile?.status_label ?? '…'} tone={profile?.status === 'active' || profile?.status === 'verified' ? 'success' : 'info'} />
         </Card>
+
+        {cases.map((c) => (
+          <Card key={c.id} style={{ borderLeftWidth: 4, borderLeftColor: C.warning }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+              <Ionicons name="alert-circle" size={20} color={C.warning} />
+              <Text style={[st.cardTitle, { flex: 1 }]} numberOfLines={2}>
+                {c.operation}
+              </Text>
+            </View>
+            <Text style={st.muted}>
+              {c.operation_kind} · dossier {c.case_number}
+            </Text>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 10 }}>
+              <Pill text={c.status_label} tone={c.status === 'relocated' || c.status === 'closed' ? 'success' : 'warning'} />
+            </View>
+            {c.needs.length > 0 && <Text style={[st.muted, { marginTop: 8 }]}>Besoins pris en compte : {c.needs.join(', ')}</Text>}
+            {!!c.relocation_site && <Text style={[st.muted, { marginTop: 4 }]}>Site de relogement : {c.relocation_site}</Text>}
+          </Card>
+        ))}
+
+        <Text style={st.section}>Mes aides</Text>
+        {aids.length === 0 ? (
+          <Card>
+            <Text style={st.muted}>Aucune aide enregistrée pour l’instant.</Text>
+          </Card>
+        ) : (
+          <Card style={{ paddingVertical: 4 }}>
+            {aids.map((a, i) => (
+              <View key={a.id} style={[st.aid, i < aids.length - 1 && st.aidSep]}>
+                <View style={[st.aidIcon, a.status === 'delivered' ? { backgroundColor: C.successPale } : { backgroundColor: C.warningPale }]}>
+                  <Ionicons name={a.status === 'delivered' ? 'checkmark' : 'time-outline'} size={18} color={a.status === 'delivered' ? C.success : C.warning} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={st.aidTitle}>{a.category_label}</Text>
+                  <Text style={st.muted} numberOfLines={2}>
+                    {[a.description, a.provider].filter(Boolean).join(' · ') || (a.status === 'delivered' ? 'Reçue' : 'Prévue')}
+                    {a.date ? ` · ${new Date(a.date).toLocaleDateString('fr-FR')}` : ''}
+                  </Text>
+                </View>
+                {a.amount !== null ? (
+                  <Text style={st.aidAmount}>{a.amount.toLocaleString('fr-FR')} F</Text>
+                ) : (
+                  <Pill text={a.status_label} tone={a.status === 'delivered' ? 'success' : 'warning'} />
+                )}
+              </View>
+            ))}
+          </Card>
+        )}
 
         <Text style={st.section}>Mes demandes d’aide</Text>
         {apps === null && !error && <Text style={st.muted}>Chargement…</Text>}
@@ -108,6 +165,11 @@ const st = StyleSheet.create({
   cardTitle: { fontSize: 17, fontWeight: '700', color: C.text },
   progressRow: { flexDirection: 'row', gap: 6, marginVertical: 14 },
   seg: { flex: 1, height: 8, borderRadius: 4, backgroundColor: C.borderLight },
+  aid: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12 },
+  aidSep: { borderBottomWidth: 1, borderBottomColor: C.borderLight },
+  aidIcon: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
+  aidTitle: { fontSize: 15.5, fontWeight: '700', color: C.text },
+  aidAmount: { fontSize: 15, fontWeight: '800', color: C.success },
   help: { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: C.tealPale, borderRadius: R.lg, padding: 16, marginTop: 6 },
   helpTxt: { flex: 1, fontSize: 15, fontWeight: '600', color: C.text },
 });

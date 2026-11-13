@@ -2,7 +2,7 @@ import NetInfo from '@react-native-community/netinfo';
 import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { ApiError, NetworkError, api, clearTokens, hasSession, saveTokens } from './api';
 import { clearPack, loadPack, loadQueue, saveQueue, savePack } from './store';
-import type { FieldPack, Me, Questionnaire, Submission, Territory } from './types';
+import type { FieldOperation, FieldPack, Me, Questionnaire, Submission, Territory } from './types';
 
 type Ctx = {
   ready: boolean;
@@ -26,9 +26,13 @@ async function downloadPack(): Promise<FieldPack> {
   const me = await api<Me>('auth/me/');
   const collect = me.memberships.find((m) => m.permissions.includes('survey.submit') && m.permissions.includes('person.create'));
   if (!collect) throw new ApiError(403, "Ce compte n'est pas habilité à la collecte terrain.");
-  const [questionnaires, territories] = await Promise.all([
+  const canEnroll = collect.permissions.includes('operation.enroll');
+  const [questionnaires, territories, operations] = await Promise.all([
     api<Questionnaire[]>('questionnaires/'),
     api<Territory[]>('territories/'),
+    canEnroll
+      ? api<{ results: FieldOperation[] }>(`operations/?organization=${collect.organization}`).then((r) => r.results)
+      : Promise.resolve([] as FieldOperation[]),
   ]);
   const questionnaire = questionnaires.sort((a, b) => b.version - a.version)[0];
   if (!questionnaire) throw new ApiError(404, 'Aucun questionnaire publié.');
@@ -38,6 +42,7 @@ async function downloadPack(): Promise<FieldPack> {
     organizationName: collect.organization_name,
     questionnaire,
     territories: territories.filter((t) => ['commune', 'neighborhood', 'village', 'site'].includes(t.level)),
+    operations: operations.filter((o) => o.status !== 'closed'),
     downloadedAt: new Date().toISOString(),
   };
 }

@@ -29,6 +29,32 @@ export type MyApplication = {
   appeal: null | { status: string; status_label: string; due_date: string; resolution: string };
 };
 
+export type MyAid = {
+  id: string;
+  category: string;
+  category_label: string;
+  description: string;
+  status: 'planned' | 'delivered';
+  status_label: string;
+  amount: number | null;
+  quantity: string | null;
+  unit: string;
+  provider: string | null;
+  date: string | null;
+};
+
+export type MyCase = {
+  id: string;
+  case_number: string;
+  operation: string;
+  operation_kind: string;
+  status: string;
+  status_label: string;
+  needs: string[];
+  relocation_site: string;
+  opened_at: string;
+};
+
 type Ctx = {
   ready: boolean;
   profile: Profile | null;

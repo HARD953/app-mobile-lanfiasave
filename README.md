@@ -24,6 +24,10 @@ Les deux applications utilisent par défaut l'API de production :
 - Connexion de l'agent, puis téléchargement du « pack terrain » (questionnaire publié + localités).
 - Assistant « Nouveau ménage » pas à pas : lieu (GPS uniquement avec accord), membres (aucune pièce d'identité
   exigée), 12 rubriques du questionnaire avec « Ne sait pas / Refus / Non applicable », récapitulatif.
+- **Rattachement à une opération** (déguerpissement, inondation, site minier…) : un dossier de suivi est ouvert
+  automatiquement pour chaque membre du ménage.
+- **Situations particulières** par personne (handicap, grossesse, orphelin, sans acte de naissance…), à confirmer
+  ensuite par un travailleur social.
 - Brouillon enregistré à chaque saisie : reprise après fermeture, batterie vide ou plantage.
 - **Hors connexion** : file d'envoi locale, envoi automatique au retour du réseau, sans doublon
   (Idempotency-Key + identifiant généré sur le téléphone).
@@ -33,6 +37,9 @@ Les deux applications utilisent par défaut l'API de production :
 
 - Connexion avec le **code dossier** (fiche remise par l'agent) et un **code PIN à 6 chiffres** sur grand pavé.
 - Suivi de chaque demande étape par étape, décision et motif en langage clair.
+- **Mes aides** : aides reçues et prévues, avec la structure qui les apporte.
+- **Mon dossier d'accompagnement** après un déguerpissement ou un sinistre : statut, besoins pris en compte,
+  site de relogement.
 - **Recours** directement depuis l'application ; page « Mes droits ».
 - Le score interne et les notes du comité ne sont jamais affichés.
 

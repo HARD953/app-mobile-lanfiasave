@@ -32,12 +32,15 @@ export type Questionnaire = {
 
 export type Territory = { id: string; code: string; name: string; level: string; parent: string | null; parent_name: string | null };
 
+export type FieldOperation = { id: string; code: string; title: string; kind: string; kind_label: string; status: string };
+
 export type FieldPack = {
   me: Me;
   organizationId: string;
   organizationName: string;
   questionnaire: Questionnaire;
   territories: Territory[];
+  operations: FieldOperation[];
   downloadedAt: string;
 };
 
@@ -52,6 +55,7 @@ export type DraftMember = {
   phone: string;
   relation: Relation;
   has_identity_document: boolean;
+  vulnerabilities: string[];
 };
 
 export type Submission = {
@@ -72,9 +76,10 @@ export type Submission = {
     latitude: number | null;
     longitude: number | null;
     emergency: boolean;
+    operation: string | null;
     collected_at: string;
     device_id: string;
     members: (DraftMember & { answers: Record<string, unknown> })[];
   };
-  summary: { headName: string; territoryName: string; membersCount: number };
+  summary: { headName: string; territoryName: string; membersCount: number; operationTitle?: string };
 };

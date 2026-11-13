@@ -19,6 +19,18 @@ import { Banner, BottomBar, Button, Card, Chips, Field, Header, Label, SectionTi
 
 const DRAFT_KEY = 'lfs.draft';
 
+/** Situations faciles à repérer sur le terrain (les situations sensibles sont qualifiées par un travailleur social). */
+const SITUATIONS: { value: string; label: string; icon: React.ComponentProps<typeof Ionicons>['name'] }[] = [
+  { value: 'disability', label: 'Handicap', icon: 'accessibility-outline' },
+  { value: 'pregnant_lactating', label: 'Enceinte / allaitante', icon: 'woman-outline' },
+  { value: 'elderly_isolated', label: 'Personne âgée isolée', icon: 'walk-outline' },
+  { value: 'orphan_ovc', label: 'Orphelin(e)', icon: 'heart-outline' },
+  { value: 'out_of_school', label: 'Enfant non scolarisé', icon: 'school-outline' },
+  { value: 'malnutrition', label: 'Malnutrition', icon: 'nutrition-outline' },
+  { value: 'no_birth_certificate', label: 'Sans acte de naissance', icon: 'document-outline' },
+  { value: 'homeless', label: 'Sans abri', icon: 'home-outline' },
+];
+
 const RELATIONS: { value: Relation; label: string }[] = [
   { value: 'head', label: 'Chef de ménage' },
   { value: 'spouse', label: 'Conjoint(e)' },
@@ -34,6 +46,7 @@ type Draft = {
   territory: string | null;
   address: string;
   emergency: boolean;
+  operation: string | null;
   gps: { latitude: number; longitude: number } | null;
   members: DraftMember[];
   answers: Record<string, unknown>;
@@ -45,6 +58,7 @@ const emptyDraft = (): Draft => ({
   territory: null,
   address: '',
   emergency: false,
+  operation: null,
   gps: null,
   members: [],
   answers: {},
@@ -78,6 +92,7 @@ export default function NewHouseholdScreen({ navigation }: NativeStackScreenProp
   }, [draft]);
 
   const territory = useMemo(() => pack?.territories.find((t) => t.id === draft?.territory), [pack, draft?.territory]);
+  const operations = pack?.operations ?? [];
   const head = draft?.members.find((m) => m.relation === 'head');
 
   if (!pack || !draft) {
@@ -144,11 +159,21 @@ export default function NewHouseholdScreen({ navigation }: NativeStackScreenProp
         latitude: draft.gps?.latitude ?? null,
         longitude: draft.gps?.longitude ?? null,
         emergency: draft.emergency,
+        operation: draft.operation,
         collected_at: new Date().toISOString(),
         device_id: await deviceId(),
-        members: draft.members.map((m) => ({ ...m, answers: m.relation === 'head' ? cleanAnswers(draft.answers, sections) : {} })),
+        members: draft.members.map((m) => ({
+          ...m,
+          vulnerabilities: m.vulnerabilities ?? [],
+          answers: m.relation === 'head' ? cleanAnswers(draft.answers, sections) : {},
+        })),
       },
-      summary: { headName: `${head.first_name} ${head.last_name}`.trim(), territoryName: territory?.name ?? '—', membersCount: draft.members.length },
+      summary: {
+        headName: `${head.first_name} ${head.last_name}`.trim(),
+        territoryName: territory?.name ?? '—',
+        membersCount: draft.members.length,
+        operationTitle: operations.find((o) => o.id === draft.operation)?.title,
+      },
     };
     await enqueue(submission);
     await AsyncStorage.removeItem(DRAFT_KEY);
@@ -178,6 +203,27 @@ export default function NewHouseholdScreen({ navigation }: NativeStackScreenProp
                 <SwitchRow icon="navigate-outline" label="Enregistrer la position GPS" hint={draft.gps ? `${draft.gps.latitude}, ${draft.gps.longitude}` : 'Seulement avec l’accord de la personne'} value={!!draft.gps} onChange={(on) => (on ? captureGps() : update({ gps: null }))} />
                 <SwitchRow icon="warning-outline" label="Situation d’urgence" hint="Inondation, déguerpissement, déplacement…" value={draft.emergency} onChange={(v) => update({ emergency: v })} />
               </Card>
+              {operations.length > 0 && (
+                <Card>
+                  <SectionTitle icon="alert-circle-outline" title="Ménage touché par une opération ?" hint="Déguerpissement, sinistre, site minier… Un dossier de suivi sera ouvert pour chaque membre." />
+                  <Pressable onPress={() => update({ operation: null })} style={[st.opRow, !draft.operation && st.opRowOn]} accessibilityRole="radio" accessibilityState={{ selected: !draft.operation }}>
+                    <Ionicons name={!draft.operation ? 'radio-button-on' : 'radio-button-off'} size={22} color={!draft.operation ? C.primary : C.textSoft} />
+                    <Text style={st.opTitle}>Non, aucune</Text>
+                  </Pressable>
+                  {operations.map((o) => {
+                    const on = draft.operation === o.id;
+                    return (
+                      <Pressable key={o.id} onPress={() => update({ operation: o.id, emergency: true })} style={[st.opRow, on && st.opRowOn]} accessibilityRole="radio" accessibilityState={{ selected: on }}>
+                        <Ionicons name={on ? 'radio-button-on' : 'radio-button-off'} size={22} color={on ? C.primary : C.textSoft} />
+                        <View style={{ flex: 1 }}>
+                          <Text style={st.opTitle}>{o.title}</Text>
+                          <Text style={st.memberSub}>{o.kind_label}</Text>
+                        </View>
+                      </Pressable>
+                    );
+                  })}
+                </Card>
+              )}
             </>
           )}
 
@@ -206,7 +252,7 @@ export default function NewHouseholdScreen({ navigation }: NativeStackScreenProp
                 icon="person-add-outline"
                 variant="secondary"
                 onPress={() =>
-                  setMemberForm({ client_uuid: uuid(), first_name: '', last_name: '', sex: 'U', estimated_age: null, phone: '', relation: head ? 'child' : 'head', has_identity_document: false })
+                  setMemberForm({ client_uuid: uuid(), first_name: '', last_name: '', sex: 'U', estimated_age: null, phone: '', relation: head ? 'child' : 'head', has_identity_document: false, vulnerabilities: [] })
                 }
               />
             </>
@@ -231,6 +277,7 @@ export default function NewHouseholdScreen({ navigation }: NativeStackScreenProp
                 <Row label="Repère" value={draft.address || '—'} />
                 <Row label="GPS" value={draft.gps ? 'Enregistré' : 'Non'} />
                 <Row label="Urgence" value={draft.emergency ? 'Oui' : 'Non'} />
+                {draft.operation && <Row label="Opération" value={operations.find((o) => o.id === draft.operation)?.title ?? '—'} />}
                 <Row label="Personnes" value={String(draft.members.length)} />
               </Card>
               <Card>
@@ -442,6 +489,26 @@ function MemberSheet({
               <Field label="Téléphone" hint="Facultatif" icon="call-outline" keyboardType="phone-pad" value={m.phone} onChangeText={(t) => setM({ ...m, phone: t.replace(/[^0-9+ ]/g, '') })} />
               <SwitchRow icon="card-outline" label="Possède une pièce d’identité" value={m.has_identity_document} onChange={(v) => setM({ ...m, has_identity_document: v })} />
             </Card>
+            <Card>
+              <Label text="Situations particulières" hint="Touchez tout ce qui s’applique. Un travailleur social confirmera." />
+              <View style={st.multi}>
+                {SITUATIONS.map((o) => {
+                  const on = (m.vulnerabilities ?? []).includes(o.value);
+                  return (
+                    <Pressable
+                      key={o.value}
+                      onPress={() => setM({ ...m, vulnerabilities: on ? m.vulnerabilities.filter((x) => x !== o.value) : [...(m.vulnerabilities ?? []), o.value] })}
+                      style={[st.multiChip, on && st.multiChipOn]}
+                      accessibilityRole="checkbox"
+                      accessibilityState={{ checked: on }}
+                    >
+                      <Ionicons name={on ? 'checkmark-circle' : o.icon} size={18} color={on ? C.white : C.textMuted} />
+                      <Text style={[st.multiTxt, on && { color: C.white }]}>{o.label}</Text>
+                    </Pressable>
+                  );
+                })}
+              </View>
+            </Card>
           </ScrollView>
         </KeyboardAvoidingView>
         <View style={[{ paddingHorizontal: 16, paddingTop: 12, paddingBottom: Math.max(insets.bottom, 12), backgroundColor: C.white, flexDirection: 'row', gap: 10 }]}>
@@ -467,6 +534,13 @@ const st = StyleSheet.create({
   special: { paddingHorizontal: 10, paddingVertical: 6, borderRadius: 14, backgroundColor: C.surfaceAlt, borderWidth: 1, borderColor: C.borderLight },
   specialOn: { backgroundColor: C.textMuted, borderColor: C.textMuted },
   specialTxt: { fontSize: 12.5, color: C.textMuted, fontWeight: '600' },
+  opRow: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: R.md, borderWidth: 1.5, borderColor: C.border, marginBottom: 8, backgroundColor: C.white },
+  opRowOn: { borderColor: C.primary, backgroundColor: C.primaryPale2 },
+  opTitle: { fontSize: 15.5, fontWeight: '600', color: C.text },
+  multi: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  multiChip: { flexDirection: 'row', alignItems: 'center', gap: 6, minHeight: 44, paddingHorizontal: 14, borderRadius: 22, borderWidth: 1.5, borderColor: C.border, backgroundColor: C.white },
+  multiChipOn: { backgroundColor: C.teal, borderColor: C.teal },
+  multiTxt: { fontSize: 14.5, color: C.text, fontWeight: '500' },
   recapRow: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 11, borderBottomWidth: 1, borderBottomColor: C.borderLight },
   select: { flexDirection: 'row', alignItems: 'center', gap: 10, height: 52, borderRadius: R.md, borderWidth: 1.5, borderColor: C.border, backgroundColor: C.white, paddingHorizontal: 14 },
   option: { flexDirection: 'row', alignItems: 'center', backgroundColor: C.white, borderRadius: R.md, padding: 16, marginBottom: 8, borderWidth: 1, borderColor: C.borderLight },
