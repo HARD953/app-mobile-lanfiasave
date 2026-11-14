@@ -147,6 +147,15 @@ export default function HomeScreen({ navigation }: NativeStackScreenProps<RootSt
           );
         })}
 
+        <TouchableOpacity style={[st.help, { backgroundColor: C.warningPale }]} onPress={() => navigation.navigate('Grievances')} accessibilityRole="button">
+          <Ionicons name="megaphone-outline" size={22} color={C.warning} />
+          <View style={{ flex: 1 }}>
+            <Text style={[st.helpTxt, { flex: 0 }]}>Signaler un problème</Text>
+            <Text style={st.muted}>Aide en retard, erreur, abus… et suivre la réponse</Text>
+          </View>
+          <Ionicons name="chevron-forward" size={18} color={C.textSoft} />
+        </TouchableOpacity>
+
         <TouchableOpacity style={st.help} onPress={() => navigation.navigate('Help')} accessibilityRole="button">
           <Ionicons name="help-buoy-outline" size={22} color={C.teal} />
           <Text style={st.helpTxt}>Besoin d’aide ? Mes droits et contacts</Text>

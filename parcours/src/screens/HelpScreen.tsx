@@ -11,7 +11,7 @@ const ITEMS: { icon: React.ComponentProps<typeof Ionicons>['name']; title: strin
   { icon: 'chatbox-ellipses-outline', title: 'Vous pouvez contester', text: 'Si vous n’êtes pas d’accord, vous pouvez faire un recours depuis l’application ou auprès de votre agent. Réponse sous 30 jours.' },
   { icon: 'card-outline', title: 'Pas besoin de papiers', text: 'L’absence de pièce d’identité ne vous empêche pas d’être recensé(e) ni accompagné(e).' },
   { icon: 'lock-closed-outline', title: 'Vos données sont protégées', text: 'Elles ne sont ni vendues ni publiées. Seules les personnes qui vous accompagnent y ont accès.' },
-  { icon: 'cash-outline', title: 'Gratuit', text: 'Aucun agent ne peut vous demander de l’argent pour être inscrit(e) ou aidé(e). Signalez-le si cela arrive.' },
+  { icon: 'cash-outline', title: 'Gratuit', text: 'Aucun agent ne peut vous demander de l’argent pour être inscrit(e) ou aidé(e). Signalez-le depuis « Signaler un problème » si cela arrive.' },
 ];
 
 export default function HelpScreen({ navigation }: NativeStackScreenProps<RootStack, 'Help'>) {

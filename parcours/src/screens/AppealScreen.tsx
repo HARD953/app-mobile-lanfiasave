@@ -32,7 +32,7 @@ export default function AppealScreen({ route, navigation }: NativeStackScreenPro
     return (
       <View style={{ flex: 1, backgroundColor: C.bg }}>
         <Header title="Recours envoyé" />
-        <View style={{ padding: 16, gap: 14 }}>
+        <View style={{ flex: 1, padding: 16, gap: 14 }}>
           <Banner tone="success" text={`Votre recours a bien été reçu. Une réponse vous sera donnée avant le ${new Date(done).toLocaleDateString('fr-FR')}.`} />
           <Text style={{ color: C.textMuted, fontSize: 15, lineHeight: 22 }}>
             Une autre personne que celle qui a pris la décision examinera votre demande. Vous ne pouvez subir aucune sanction pour avoir contesté une décision.

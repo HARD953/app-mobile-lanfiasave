@@ -6,10 +6,12 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import type { RootStack } from './src/navigation';
 import AppealScreen from './src/screens/AppealScreen';
 import ApplicationScreen from './src/screens/ApplicationScreen';
+import GrievancesScreen from './src/screens/GrievancesScreen';
 import HelpScreen from './src/screens/HelpScreen';
 import HomeScreen from './src/screens/HomeScreen';
 import LoginScreen from './src/screens/LoginScreen';
 import ProfileScreen from './src/screens/ProfileScreen';
+import ReportScreen from './src/screens/ReportScreen';
 import { SessionProvider, useSession } from './src/session';
 import { C } from './src/theme';
 
@@ -33,6 +35,8 @@ function Routes() {
           <Stack.Screen name="Appeal" component={AppealScreen} />
           <Stack.Screen name="Profile" component={ProfileScreen} />
           <Stack.Screen name="Help" component={HelpScreen} />
+          <Stack.Screen name="Grievances" component={GrievancesScreen} />
+          <Stack.Screen name="Report" component={ReportScreen} />
         </>
       ) : (
         <Stack.Screen name="Login" component={LoginScreen} />

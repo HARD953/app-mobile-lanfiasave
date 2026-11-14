@@ -1,3 +1,4 @@
+import type { GrievanceCategory } from './screens/GrievancesScreen';
 import type { MyApplication } from './session';
 
 export type RootStack = {
@@ -7,4 +8,6 @@ export type RootStack = {
   Appeal: { decisionId: string; program: string };
   Profile: undefined;
   Help: undefined;
+  Grievances: undefined;
+  Report: { categories: GrievanceCategory[] };
 };
