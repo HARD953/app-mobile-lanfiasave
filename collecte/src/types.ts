@@ -36,12 +36,40 @@ export type Territory = { id: string; code: string; name: string; level: string;
 
 export type FieldOperation = { id: string; code: string; title: string; kind: string; kind_label: string; status: string };
 
+export type Option = { value: string; label: string };
+export type ClaimsMeta = {
+  sectors: Option[];
+  impacts: (Option & { sectors: string[] })[];
+  watch_list: Record<string, string>;
+  profiles: (Option & { help: string })[];
+  urgency_reasons: Option[];
+};
+
+export type ClaimSubmission = {
+  client_uuid: string;
+  /** Numéro de dossier remis tout de suite sur le récépissé, même sans réseau. */
+  reference: string;
+  createdAt: string;
+  status: 'pending' | 'sending' | 'sent' | 'error';
+  error?: string;
+  attempts: number;
+  sentAt?: string;
+  serverReference?: string;
+  payload: Record<string, unknown>;
+  summary: { name: string; village: string; impacts: string[]; urgent: boolean };
+};
+
 export type FieldPack = {
   me: Me;
+  /** Peut saisir des enquêtes ménages (recenseur). */
+  canSurvey?: boolean;
+  /** Peut enregistrer des demandes de ménages affectés (relais, recenseur). */
+  canClaim?: boolean;
+  claimsMeta?: ClaimsMeta;
   organizationId: string;
   organizationName: string;
-  /** Questionnaire complet (rétrocompatibilité avec les packs déjà téléchargés). */
-  questionnaire: Questionnaire;
+  /** Questionnaire complet (absent pour un relais qui n'enregistre que des demandes). */
+  questionnaire?: Questionnaire;
   /** Formulaires disponibles, du plus court au plus complet. */
   questionnaires?: Questionnaire[];
   territories: Territory[];

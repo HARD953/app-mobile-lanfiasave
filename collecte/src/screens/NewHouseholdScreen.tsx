@@ -73,7 +73,7 @@ export default function NewHouseholdScreen({ navigation }: NativeStackScreenProp
   const [saving, setSaving] = useState(false);
   const scrollRef = useRef<ScrollViewInstance>(null);
 
-  const forms = pack ? pack.questionnaires ?? [pack.questionnaire] : [];
+  const forms = pack ? pack.questionnaires ?? (pack.questionnaire ? [pack.questionnaire] : []) : [];
   const selectedOperation = pack?.operations?.find((o) => o.id === draft?.operation);
   const recommended =
     forms.find((f) => selectedOperation && f.variant?.recommended_for.includes(selectedOperation.kind)) ??
@@ -415,7 +415,7 @@ function QuestionInput({ q, value, special, onChange }: { q: Question; value: un
   );
 }
 
-function TerritoryPicker({ territories, value, onChange }: { territories: Territory[]; value: string | null; onChange: (id: string) => void }) {
+export function TerritoryPicker({ territories, value, onChange }: { territories: Territory[]; value: string | null; onChange: (id: string) => void }) {
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState('');
   const insets = useSafeAreaInsets();

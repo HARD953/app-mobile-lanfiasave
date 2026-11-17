@@ -18,8 +18,10 @@ const STATUS: Record<Submission['status'], { label: string; tone: 'success' | 'w
 
 export default function HomeScreen({ navigation }: NativeStackScreenProps<RootStack, 'Home'>) {
   const insets = useSafeAreaInsets();
-  const { pack, queue, online, syncing, syncNow } = useSession();
-  const pending = queue.filter((q) => q.status !== 'sent').length;
+  const { pack, queue, claims, online, syncing, syncNow } = useSession();
+  const canSurvey = pack?.canSurvey ?? true;
+  const canClaim = !!pack?.canClaim;
+  const pending = queue.filter((q) => q.status !== 'sent').length + claims.filter((c) => c.status !== 'sent').length;
   const sentToday = queue.filter((q) => q.status === 'sent' && q.sentAt?.slice(0, 10) === new Date().toISOString().slice(0, 10)).length;
   const errors = queue.filter((q) => q.status === 'error');
   const firstName = pack?.me.full_name.split(' ')[0] ?? '';
@@ -30,7 +32,11 @@ export default function HomeScreen({ navigation }: NativeStackScreenProps<RootSt
         <View style={st.statsRow}>
           <Stat value={pending} label="À envoyer" icon="cloud-upload-outline" />
           <Stat value={sentToday} label="Envoyés aujourd’hui" icon="checkmark-done-outline" />
-          <Stat value={queue.length} label="Ménages saisis" icon="home-outline" />
+          {canSurvey ? (
+            <Stat value={queue.length} label="Ménages saisis" icon="home-outline" />
+          ) : (
+            <Stat value={claims.length} label="Demandes saisies" icon="document-text-outline" />
+          )}
         </View>
       </Header>
 
@@ -48,23 +54,44 @@ export default function HomeScreen({ navigation }: NativeStackScreenProps<RootSt
               <View style={{ flex: 1 }}>
                 <Text style={st.syncTitle}>{online ? 'Connecté' : 'Hors connexion'}</Text>
                 <Text style={st.syncSub}>
-                  {syncing ? 'Envoi en cours…' : pending ? `${pending} ménage(s) seront envoyés automatiquement` : 'Tout est envoyé'}
+                  {syncing ? 'Envoi en cours…' : pending ? `${pending} envoi(s) partiront automatiquement` : 'Tout est envoyé'}
                 </Text>
               </View>
               {!!pending && !syncing && <Ionicons name="refresh" size={22} color={C.primary} />}
             </TouchableOpacity>
             {errors.length > 0 && <Banner tone="error" text={`${errors.length} envoi(s) refusé(s) par le serveur. Ouvrez-les pour voir le motif.`} />}
+            {claims.length > 0 && <Text style={st.listTitle}>Mes demandes (récépissés)</Text>}
+            {claims.map((c) => (
+              <View key={c.client_uuid} style={st.item}>
+                <View style={[st.itemIcon, c.summary.urgent && { backgroundColor: C.errorPale }]}>
+                  <Ionicons name="document-text" size={20} color={c.summary.urgent ? C.error : C.primary} />
+                </View>
+                <View style={{ flex: 1, gap: 3 }}>
+                  <Text style={st.itemTitle}>{c.serverReference ?? c.reference}</Text>
+                  <Text style={st.itemSub}>{c.summary.name}{c.summary.village ? ` · ${c.summary.village}` : ''}</Text>
+                  {!!c.serverReference && c.serverReference !== c.reference && (
+                    <Text style={[st.itemSub, { color: C.warning }]}>Numéro modifié par le serveur : prévenir le ménage (ancien {c.reference})</Text>
+                  )}
+                  {c.status === 'error' && !!c.error && <Text style={[st.itemSub, { color: C.error }]}>{c.error}</Text>}
+                  <Pill text={STATUS[c.status].label} tone={STATUS[c.status].tone} />
+                </View>
+              </View>
+            ))}
             {queue.length > 0 && <Text style={st.listTitle}>Mes ménages</Text>}
           </View>
         }
         ListEmptyComponent={
+          claims.length ? undefined : (
           <View style={st.empty}>
             <View style={st.emptyIcon}>
               <Ionicons name="people-outline" size={34} color={C.primary} />
             </View>
-            <Text style={st.emptyTitle}>Aucun ménage enregistré</Text>
-            <Text style={st.emptyText}>Touchez « Nouveau ménage » pour commencer. Vous pouvez travailler sans réseau.</Text>
+            <Text style={st.emptyTitle}>{canSurvey ? 'Aucun ménage enregistré' : 'Aucune demande enregistrée'}</Text>
+            <Text style={st.emptyText}>
+              {canSurvey ? 'Touchez « Nouveau ménage » pour commencer.' : 'Touchez « Nouvelle demande » pour enregistrer un ménage affecté.'} Vous pouvez travailler sans réseau.
+            </Text>
           </View>
+          )
         }
         renderItem={({ item }) => (
           <TouchableOpacity style={st.item} onPress={() => navigation.navigate('SubmissionDetail', { id: item.client_uuid })} accessibilityRole="button">
@@ -88,11 +115,19 @@ export default function HomeScreen({ navigation }: NativeStackScreenProps<RootSt
         )}
       />
 
-      <View style={[st.fabWrap, { paddingBottom: Math.max(insets.bottom, 16) }]}>
-        <TouchableOpacity style={st.fab} onPress={() => navigation.navigate('NewHousehold')} accessibilityRole="button" accessibilityLabel="Nouveau ménage">
-          <Ionicons name="add-circle" size={26} color={C.white} />
-          <Text style={st.fabTxt}>Nouveau ménage</Text>
-        </TouchableOpacity>
+      <View style={[st.fabWrap, { paddingBottom: Math.max(insets.bottom, 16), flexDirection: 'row', gap: 10 }]}>
+        {canSurvey && (
+          <TouchableOpacity style={[st.fab, { flex: 1 }]} onPress={() => navigation.navigate('NewHousehold')} accessibilityRole="button" accessibilityLabel="Nouveau ménage">
+            <Ionicons name="add-circle" size={24} color={C.white} />
+            <Text style={[st.fabTxt, canClaim && { fontSize: 15 }]}>Nouveau ménage</Text>
+          </TouchableOpacity>
+        )}
+        {canClaim && (
+          <TouchableOpacity style={[st.fab, { flex: 1, backgroundColor: C.teal }]} onPress={() => navigation.navigate('NewClaim')} accessibilityRole="button" accessibilityLabel="Nouvelle demande">
+            <Ionicons name="document-text" size={22} color={C.white} />
+            <Text style={[st.fabTxt, canSurvey && { fontSize: 15 }]}>Nouvelle demande</Text>
+          </TouchableOpacity>
+        )}
       </View>
     </View>
   );

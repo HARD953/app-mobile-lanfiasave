@@ -6,6 +6,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import type { RootStack } from './src/navigation';
 import HomeScreen from './src/screens/HomeScreen';
 import LoginScreen from './src/screens/LoginScreen';
+import NewClaimScreen from './src/screens/NewClaimScreen';
 import NewHouseholdScreen from './src/screens/NewHouseholdScreen';
 import SettingsScreen from './src/screens/SettingsScreen';
 import SubmissionDetailScreen from './src/screens/SubmissionDetailScreen';
@@ -29,6 +30,7 @@ function Routes() {
         <>
           <Stack.Screen name="Home" component={HomeScreen} />
           <Stack.Screen name="NewHousehold" component={NewHouseholdScreen} options={{ gestureEnabled: false }} />
+          <Stack.Screen name="NewClaim" component={NewClaimScreen} options={{ gestureEnabled: false }} />
           <Stack.Screen name="SubmissionDetail" component={SubmissionDetailScreen} />
           <Stack.Screen name="Settings" component={SettingsScreen} />
         </>

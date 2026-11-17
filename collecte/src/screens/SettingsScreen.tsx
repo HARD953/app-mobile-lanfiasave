@@ -53,7 +53,7 @@ export default function SettingsScreen({ navigation }: NativeStackScreenProps<Ro
         </Card>
         <Card>
           <SectionTitle icon="cloud-download-outline" title="Données de terrain" />
-          <Info label="Formulaires" value={pack ? (pack.questionnaires ?? [pack.questionnaire]).map((q) => q.variant?.label ?? q.title).join(' · ') : '—'} />
+          <Info label="Formulaires" value={pack ? (pack.questionnaires ?? (pack.questionnaire ? [pack.questionnaire] : [])).map((q) => q.variant?.label ?? q.title).join(' · ') : '—'} />
           <Info label="Localités" value={String(pack?.territories.length ?? 0)} />
           <Info label="Téléchargé le" value={pack ? new Date(pack.downloadedAt).toLocaleString('fr-FR') : '—'} />
           <Button title="Mettre à jour" icon="refresh" variant="secondary" onPress={update} loading={busy} style={{ marginTop: 12 }} />
